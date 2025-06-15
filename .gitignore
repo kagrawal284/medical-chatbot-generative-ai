@@ -1,1 +1,16 @@
 .env
+
+# Python bytecode - catch all __pycache__ directories and .pyc files anywhere
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/.pytest_cache/
+
+Data/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+
+

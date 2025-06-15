@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediBot - Your Medical Assistant</title>
+    <!-- Fixed CSS path for Flask -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="status-indicator"></div>
+        <h1>🏥 MediBot</h1>
+        <p>Your AI Medical Assistant - Available 24/7</p>
+      </div>
+
+      <div class="disclaimer">
+        ⚠️ <strong>Important:</strong> This chatbot provides general health
+        information only. Always consult healthcare professionals for medical
+        advice, diagnosis, or treatment.
+      </div>
+
+      <!-- MISSING: Chat messages area - ADDED -->
+      <div class="chat-messages" id="chatMessages">
+        <div class="message">
+          <div class="message-avatar bot-avatar">👩‍⚕️</div>
+          <div class="message-content bot-message">
+            Hello! I'm MediBot, your AI medical assistant. I can help you with
+            general health information, symptom guidance, and wellness tips. How
+            can I assist you today?
+            <div class="message-time" id="initialTime"></div>
+          </div>
+        </div>
+
+        <!-- MISSING: Typing indicator - ADDED -->
+        <div class="message" id="typingContainer" style="display: none">
+          <div class="message-avatar bot-avatar">👩‍⚕️</div>
+          <div class="typing-indicator" id="typingIndicator">
+            <span>MediBot is typing</span>
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <div class="input-container">
+          <!-- Nurse Avatar on the left -->
+          <div class="input-avatar">😷</div>
+
+          <textarea
+            class="message-input"
+            id="messageInput"
+            placeholder="Type your health question here..."
+            rows="1"
+            onkeypress="handleKeyPress(event)"
+          ></textarea>
+
+          <button class="send-button" onclick="sendMessage()" id="sendBtn">
+            ➤
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function handleKeyPress(event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const message = input.value.trim();
+
+        if (message === "") return;
+
+        // Disable input and button while processing
+        input.disabled = true;
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = "0.6";
+
+        // Add user message
+        addMessage(message, "user");
+        input.value = "";
+
+        // Show typing indicator
+        showTypingIndicator();
+
+        try {
+          // Get bot response from Flask backend
+          const botResponse = await getBotResponseFromServer(message);
+          hideTypingIndicator();
+          addMessage(botResponse, "bot");
+        } catch (error) {
+          hideTypingIndicator();
+          console.error("Error getting bot response:", error);
+          addMessage(
+            "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+            "bot"
+          );
+        } finally {
+          // Re-enable input and button
+          input.disabled = false;
+          sendBtn.disabled = false;
+          sendBtn.style.opacity = "1";
+          input.focus(); // Return focus to input
+        }
+      }
+
+      async function getBotResponseFromServer(userMessage) {
+        const formData = new FormData();
+        formData.append("msg", userMessage);
+
+        const response = await fetch("/get", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const botResponse = await response.text();
+        return botResponse;
+      }
+
+      function addMessage(text, sender) {
+        const messagesContainer = document.getElementById("chatMessages");
+        const currentTime = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+
+        const avatar = sender === "user" ? "😷" : "👩‍⚕️";
+        const avatarClass = sender === "user" ? "user-avatar" : "bot-avatar";
+        const messageClass = sender === "user" ? "user-message" : "bot-message";
+
+        messageDiv.innerHTML = `
+                <div class="message-avatar ${avatarClass}">${avatar}</div>
+                <div class="message-content ${messageClass}">
+                    ${text}
+                    <div class="message-time">${currentTime}</div>
+                </div>
+            `;
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const container = document.getElementById("typingContainer");
+        const indicator = document.getElementById("typingIndicator");
+        if (container && indicator) {
+          container.style.display = "block";
+          indicator.style.display = "flex";
+          const messagesContainer = document.getElementById("chatMessages");
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
+
+      function hideTypingIndicator() {
+        const container = document.getElementById("typingContainer");
+        const indicator = document.getElementById("typingIndicator");
+        if (container && indicator) {
+          container.style.display = "none";
+          indicator.style.display = "none";
+        }
+      }
+
+      // Set initial time for welcome message
+      document.addEventListener("DOMContentLoaded", function () {
+        const initialTime = document.getElementById("initialTime");
+        if (initialTime) {
+          const currentTime = new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          initialTime.textContent = currentTime;
+        }
+      });
+
+      // Auto-resize textarea with input avatar animation
+      document
+        .getElementById("messageInput")
+        .addEventListener("input", function () {
+          const inputAvatar = document.querySelector(".input-avatar");
+
+          // Add typing animation class
+          inputAvatar.classList.add("typing");
+
+          // Remove animation after user stops typing (500ms delay)
+          clearTimeout(window.typingTimer);
+          window.typingTimer = setTimeout(() => {
+            inputAvatar.classList.remove("typing");
+          }, 500);
+
+          // Auto-resize textarea
+          this.style.height = "auto";
+          this.style.height = Math.min(this.scrollHeight, 100) + "px";
+        });
+
+      // Optional: Handle browser refresh to show a warning
+      window.addEventListener("beforeunload", function (e) {
+        // Only show warning if there's text in the input
+        const input = document.getElementById("messageInput");
+        if (input && input.value.trim() !== "") {
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+    </script>
+  </body>
+</html>

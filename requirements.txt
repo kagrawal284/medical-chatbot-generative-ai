@@ -1,4 +1,5 @@
-sentence-transformers==2.2.2
+sentence-transformers
+huggingface-hub
 langchain
 flask
 pypdf
@@ -8,4 +9,5 @@ langchain-pinecone
 langchain_community
 langchain_openai
 langchain_experimental
+langchain-google-genai
 -e .
