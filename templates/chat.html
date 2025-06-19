@@ -24,7 +24,7 @@
         advice, diagnosis, or treatment.
       </div>
 
-      <!-- MISSING: Chat messages area - ADDED -->
+      <!-- Chat messages area -->
       <div class="chat-messages" id="chatMessages">
         <div class="message">
           <div class="message-avatar bot-avatar">👩‍⚕️</div>
@@ -35,19 +35,7 @@
             <div class="message-time" id="initialTime"></div>
           </div>
         </div>
-
-        <!-- MISSING: Typing indicator - ADDED -->
-        <div class="message" id="typingContainer" style="display: none">
-          <div class="message-avatar bot-avatar">👩‍⚕️</div>
-          <div class="typing-indicator" id="typingIndicator">
-            <span>MediBot is typing</span>
-            <div class="typing-dots">
-              <div class="typing-dot"></div>
-              <div class="typing-dot"></div>
-              <div class="typing-dot"></div>
-            </div>
-          </div>
-        </div>
+        <!-- Typing indicator will be dynamically added here -->
       </div>
 
       <div class="chat-input">
@@ -162,22 +150,40 @@
       }
 
       function showTypingIndicator() {
-        const container = document.getElementById("typingContainer");
-        const indicator = document.getElementById("typingIndicator");
-        if (container && indicator) {
-          container.style.display = "block";
-          indicator.style.display = "flex";
-          const messagesContainer = document.getElementById("chatMessages");
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        const messagesContainer = document.getElementById("chatMessages");
+
+        // Remove any existing typing indicator first
+        const existingIndicator = document.getElementById("typingContainer");
+        if (existingIndicator) {
+          existingIndicator.remove();
         }
+
+        // Create new typing indicator
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "message";
+        typingDiv.id = "typingContainer";
+
+        typingDiv.innerHTML = `
+          <div class="message-avatar bot-avatar">👩‍⚕️</div>
+          <div class="typing-indicator" id="typingIndicator">
+            <span>MediBot is typing</span>
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+        `;
+
+        // Append to the end of messages container
+        messagesContainer.appendChild(typingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
 
       function hideTypingIndicator() {
-        const container = document.getElementById("typingContainer");
-        const indicator = document.getElementById("typingIndicator");
-        if (container && indicator) {
-          container.style.display = "none";
-          indicator.style.display = "none";
+        const typingContainer = document.getElementById("typingContainer");
+        if (typingContainer) {
+          typingContainer.remove();
         }
       }
 
